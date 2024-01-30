@@ -1,4 +1,3 @@
-import { count } from "console";
 import { Client, Message, TextChannel } from "discord.js";
 import { config } from 'dotenv';
 config();
