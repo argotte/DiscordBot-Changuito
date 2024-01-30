@@ -43,7 +43,8 @@ Generated\ Files/
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
-
+# Environment variables
+.env
 # NUnit
 *.VisualState.xml
 TestResult.xml
