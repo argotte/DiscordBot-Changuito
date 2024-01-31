@@ -4,12 +4,10 @@ exports.RegisterCommand = void 0;
 const discord_js_1 = require("discord.js");
 const dotenv_1 = require("dotenv");
 (0, dotenv_1.config)();
-// ARREGLA ESTOOOOO
 class RegisterCommand {
     clientID = process.env.CLIENT_ID;
     guildID = process.env.GUILD_ID;
     token = process.env.TOKEN;
-    // public async registerCommand() {
     commands = [
         {
             name: "ping",
@@ -18,6 +16,24 @@ class RegisterCommand {
         {
             name: "hola",
             description: "El chango te saluda",
+        },
+        {
+            name: "sumar",
+            description: "Asi es, chango sabe sumar",
+            options: [
+                {
+                    name: "num1",
+                    description: "Primer numero",
+                    type: discord_js_1.ApplicationCommandOptionType.Number,
+                    required: true,
+                },
+                {
+                    name: "num2",
+                    description: "Segundo numero",
+                    type: discord_js_1.ApplicationCommandOptionType.Number,
+                    required: true,
+                },
+            ],
         },
     ];
     registerCommands() {
@@ -37,23 +53,3 @@ class RegisterCommand {
     }
 }
 exports.RegisterCommand = RegisterCommand;
-//     try {
-//         console.log('Started refreshing application (/) commands.');
-//         await rest.put(
-//             Routes.applicationGuildCommands(this.clientID, this.guildID),
-//             { body: [
-//                 {
-//                     name: 'Hola',
-//                     description: 'El chango saluda!'
-//                 },
-//                 {
-//                     name: 'ping',
-//                     description: 'Replies with Pong!'
-//                 }
-//             ] },
-//         );
-//     } catch (error) {
-//         console.error(error);
-//     }
-// }
-// }

@@ -49,6 +49,15 @@ class BotDiscord {
                 case "hola":
                     await interaction.reply("Hola chango");
                     break;
+                case "sumar":
+                    if (!interaction.options.get("num1") || !interaction.options.get("num2")) {
+                        await interaction.reply("Faltan parámetros");
+                        return;
+                    }
+                    const num1 = interaction.options.get("num1")?.value;
+                    const num2 = interaction.options.get("num2")?.value;
+                    await interaction.reply(`La changosuma es: ${num1 + num2}`);
+                    break;
             }
         });
     }
