@@ -1,30 +1,25 @@
-import { Client, Message, TextChannel } from "discord.js";
+import { Client, IntentsBitField, Message, TextChannel } from "discord.js";
 import { config } from 'dotenv';
 config();
 import * as configjson from './config.json';
-class BotDiscord {
+import { RegisterCommand } from "./register-command";
+export class BotDiscord {
   private client: Client;
   private prefix: string = configjson.prefix;
-constructor() {
-this.client = new Client(
-    { intents: ["GuildMessages", "Guilds","MessageContent",
+  private registerCommand: RegisterCommand = new RegisterCommand();
+constructor(registerCommmand = new RegisterCommand()) {
+  this.client = new Client(
+              { intents: [IntentsBitField.Flags.Guilds,
+                "GuildMessages", "Guilds","MessageContent",
                 "GuildPresences","AutoModerationConfiguration","AutoModerationExecution",
                 "DirectMessageReactions","DirectMessageTyping","DirectMessages","GuildBans",
                 "GuildEmojisAndStickers","GuildIntegrations","GuildInvites","GuildMembers",
                 "GuildMessageReactions","GuildMessageTyping","GuildModeration",
-                "GuildPresences","GuildScheduledEvents","GuildVoiceStates","GuildWebhooks"] });
-
-
-    this.client.on("ready",() => {
-        console.log(`Bot is ready as: ${this.client.user?.tag}`);
-        
-    });
-    this.client.on("messageCreate", (message: Message) => {
-        if (!message.content.startsWith(this.prefix) || message.author.bot) return;
-        if (message.content === this.prefix+" hola") {
-            message.reply("hola changuito");
-        }
-    });
+                "GuildPresences","GuildScheduledEvents","GuildVoiceStates","GuildWebhooks"] 
+              });
+    this.registerCommand = registerCommmand;
+    this.registerCommand.registerCommands();
+    this.setupEventHandlers();
 }
 
   public start() {
@@ -32,7 +27,42 @@ this.client = new Client(
       process.env.TOKEN
     );
   }
-}
 
-const bot = new BotDiscord();
-bot.start();
+  private setupEventHandlers() {
+        this.client.on("ready", () => {
+          console.log(`Bot is ready as: ${this.client.user?.tag}`);
+        });
+        
+        this.client.on("messageCreate", (message: Message) => {
+          if (!message.content.startsWith(this.prefix) || message.author.bot) return;
+          if (message.content === this.prefix+" hola") {
+              message.reply("hola changuito");
+          }
+        });
+
+        this.client.on("interactionCreate", async (interaction) => {
+          console.log("interactionCreatelog");
+          if (!interaction.isChatInputCommand()) return;
+          const { commandName } = interaction;
+          switch (commandName) {
+            case "ping":
+              await interaction.reply("changopong");
+              break;
+            case "hola":
+              await interaction.reply("Hola chango");
+              break;
+          }
+        });
+  }
+
+  // public interactionCreate() {
+  //   this.client.on("interactionCreate", async (interaction) => {
+  //     if (!interaction.isCommand()) return;
+  //     const { commandName } = interaction;
+  //     if (commandName === "ping") {
+  //       await interaction.reply("Pong!");
+  //     }
+  //   });
+  // }
+
+}
