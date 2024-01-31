@@ -1,12 +1,10 @@
 import { REST,Routes } from "discord.js";
 import { config } from "dotenv";
 config();
-// ARREGLA ESTOOOOO
 export class RegisterCommand {
     private readonly clientID: string = process.env.CLIENT_ID as string;
     private readonly guildID: string = process.env.GUILD_ID as string;
     private readonly token: string = process.env.TOKEN as string;
-    // public async registerCommand() {
         commands = [
             {
                 name: "ping",

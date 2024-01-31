@@ -55,14 +55,4 @@ constructor(registerCommmand = new RegisterCommand()) {
         });
   }
 
-  // public interactionCreate() {
-  //   this.client.on("interactionCreate", async (interaction) => {
-  //     if (!interaction.isCommand()) return;
-  //     const { commandName } = interaction;
-  //     if (commandName === "ping") {
-  //       await interaction.reply("Pong!");
-  //     }
-  //   });
-  // }
-
 }
