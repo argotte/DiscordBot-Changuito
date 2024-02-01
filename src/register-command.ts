@@ -11,6 +11,10 @@ export class RegisterCommand {
       description: "ChangoPong!",
     },
     {
+      name: "serverinfo",
+      description: "Devuelve información del servidor",
+    },
+    {
       name: "hola",
       description: "El chango te saluda",
     },

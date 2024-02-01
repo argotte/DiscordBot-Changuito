@@ -1,4 +1,4 @@
-import { Client, IntentsBitField, Message, TextChannel } from "discord.js";
+import { EmbedBuilder, IntentsBitField, Message, TextChannel, Client } from "discord.js";
 import { config } from 'dotenv';
 config();
 import * as configjson from './config.json';
@@ -10,6 +10,22 @@ export class BotDiscord {
 constructor(registerCommmand = new RegisterCommand()) {
   this.client = new Client(
               { intents: [IntentsBitField.Flags.Guilds,
+                IntentsBitField.Flags.GuildMessages,
+                IntentsBitField.Flags.GuildMembers,
+                IntentsBitField.Flags.GuildMessageReactions,
+                IntentsBitField.Flags.GuildMessageTyping,
+                IntentsBitField.Flags.GuildPresences,
+                IntentsBitField.Flags.GuildVoiceStates,
+                IntentsBitField.Flags.GuildWebhooks,
+                IntentsBitField.Flags.GuildEmojisAndStickers,
+                IntentsBitField.Flags.GuildIntegrations,
+                IntentsBitField.Flags.GuildInvites,
+                IntentsBitField.Flags.GuildScheduledEvents,
+                IntentsBitField.Flags.DirectMessages,
+                IntentsBitField.Flags.DirectMessageReactions,
+                IntentsBitField.Flags.DirectMessageTyping,
+                IntentsBitField.Flags.GuildModeration,
+                IntentsBitField.Flags.AutoModerationConfiguration,
                 "GuildMessages", "Guilds","MessageContent",
                 "GuildPresences","AutoModerationConfiguration","AutoModerationExecution",
                 "DirectMessageReactions","DirectMessageTyping","DirectMessages","GuildBans",
@@ -52,7 +68,10 @@ constructor(registerCommmand = new RegisterCommand()) {
               await interaction.reply("Hola chango");
               break;
             case "sumar":
-              if (!interaction.options.get("num1") || !interaction.options.get("num2")) {
+              if (
+                !interaction.options.get("num1") ||
+                !interaction.options.get("num2")
+              ) {
                 await interaction.reply("Faltan parámetros");
                 return;
               }
@@ -60,6 +79,47 @@ constructor(registerCommmand = new RegisterCommand()) {
               const num2 = interaction.options.get("num2")?.value as number;
               await interaction.reply(`La changosuma es: ${num1 + num2}`);
               break;
+            case "serverinfo":
+              const { guild } = interaction;
+
+              if (!guild) {
+                await interaction.reply(
+                  "This command can only be used in a server."
+                );
+                return;
+              }
+
+              const embed = new EmbedBuilder()
+                .setTitle(`INFORMACIÓN DEL SERVIDOR`)
+                .setDescription(`Detalles sobre ${guild.name}`)
+                .setColor("Random")
+                .addFields(
+                  { name: "Server: ", value: guild.name, inline: true },
+                  {
+                    name: "Cantidad de miembros:",
+                    value: guild.memberCount.toString(),
+                    inline: true,
+                  },
+                  {
+                    name: "Cantidad de Roles:",
+                    value: guild.roles.cache.size.toString(),
+                    inline: true,
+                  },
+                  {
+                    name: "Fecha de creación:",
+                    value: guild.createdAt.toDateString(),
+                    inline: true,
+                  }
+                )
+                .setTimestamp();
+
+              await interaction.reply({ embeds: [embed] });
+              break;
+          
+            // case "menu":
+            //   const menu = new MessageActionRow()
+            //   break;
+              
           }
         });
 
