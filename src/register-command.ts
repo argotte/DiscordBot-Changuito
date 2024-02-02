@@ -36,6 +36,24 @@ export class RegisterCommand {
         },
       ],
     },
+    {
+      name:"menu",
+      description:"Menu del soporte del chango",
+      // options:[
+      //   {
+      //     name:"target",
+      //     description:"Usuario a banear",
+      //     type:ApplicationCommandOptionType.User,
+      //     required:true
+      //   },
+      //   {
+      //     name:"reason",
+      //     description:"Razón del ban",
+      //     type:ApplicationCommandOptionType.String,
+      //     required:false
+      //   }
+      // ]
+    }
   ];
 
   public registerCommands() {
