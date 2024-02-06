@@ -60,61 +60,27 @@ export class BotDiscord {
   }
   
   private setupEventHandlers() {
-    this.client.on("ready", () => {
+    this.client.on("ready", async () => {
       console.log(`Bot is ready as: ${this.client.user?.tag}`);
           const guild = this.client.guilds.cache.first(); // Replace with the actual guild if needed
           if (guild) {
-            // if(!ticketeraChannel)
-            guild.members.fetch().then((members) => {
-              members.each(async(member) => {
-                // Ignore bots
-                if (member.user.bot) return;
-                const checkChannelExist = await guild.channels.cache.find(
-                              (channel) => channel.name === "ticketera"
-                            ) as TextChannel;
-                if(!checkChannelExist){
-                                  console.log(`No existe para ${member.user.username}. Se creara`)
-                                  await guild.channels.create({
-                                    name: "Ticketera",
-                                    type: ChannelType.GuildText,
-                                    permissionOverwrites: [
-                                      {
-                                        id: guild.roles.everyone.id,
-                                        deny: [
-                                          PermissionsBitField.Flags.ViewChannel,
-                                        ], // Deny access to everyone
-                                      },
-                                      {
-                                        id: member.user.id,
-                                        allow: [
-                                          PermissionsBitField.Flags.ViewChannel,
-                                        ], // Allow access to the member
-                                      },
-                                      {
-                                        id: this.client.user?.id ?? "null",
-                                        allow: [
-                                          PermissionsBitField.Flags.ViewChannel,
-                                        ], //allow access to bot
-                                      },
-                                    ],
-                                  });
-                }
-
-              });
-            });
-            //another fetch
-            guild.members.fetch().then((members) => {
-              members.each(async(member) => {
-                // Ignore bots
-                if (member.user.bot) return;
-                const checkChannelExist = await guild.channels.cache.find(
-                              (channel) => channel.name === "ticketera"
-                            ) as TextChannel;
-                if(checkChannelExist){
-                  this.ticketeraSystem(guild); 
-                }
-              });
-            });
+            await guild?.channels.fetch();
+              let ticketeraChannel = guild.channels.cache.find(
+                (channel) => channel.name === "changoticket"
+              ) as TextChannel;
+              if (!ticketeraChannel) {
+                await guild.channels.create({
+                  name: "changoticket",
+                  type: ChannelType.GuildText,
+                  permissionOverwrites: [
+                    {
+                      id: guild.roles.everyone.id,
+                      deny: [PermissionsBitField.Flags.SendMessages], // No one can send messages
+                    },
+                  ],
+                });
+              }
+              this.ticketeraSystem();
           }
     });
 
@@ -214,67 +180,84 @@ export class BotDiscord {
     });
   }
 
-  private async ticketeraSystem(guild?: Guild) {
-  const ticketeraChannel = guild?.channels.cache.find(
-    (channel) => channel.name === "ticketera"
-  ) as TextChannel;
+  private async ticketeraSystem() {
+   const guild = this.client.guilds.cache.first();
+      await guild?.channels.fetch();
+    const ticketeraChannel = guild?.channels.cache.find(
+      (channel) => channel.name === "changoticket"
+    ) as TextChannel;
 
-  if (!ticketeraChannel) {
-    console.log("Ticketera channel not found");
-    return;
-  }
-
-  // Create the initial button
-  const createTicketButton =
-    new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-      new ButtonBuilder()
-        .setCustomId("create_ticket")
-        .setLabel("Crear Ticket")
-        .setStyle(ButtonStyle.Primary)
-    );
-
-  // Send the initial button
-  ticketeraChannel.send({
-    content: "Click the button below to create a ticket.",
-    components: [createTicketButton],
-  });
-
-  // Event listener for button clicks
-  this.client.on("interactionCreate", async (interaction) => {
-    if (!interaction.isButton()) return;
-
-    if (interaction.customId === "create_ticket") {
-      // Create the "Comprar" and "Support" buttons
-      const ticketButtons =
-        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-          new ButtonBuilder()
-            .setCustomId("comprar")
-            .setLabel("Comprar")
-            .setStyle(ButtonStyle.Danger),
-          new ButtonBuilder()
-            .setCustomId("support")
-            .setLabel("Support")
-            .setStyle(ButtonStyle.Secondary)
-        );
-
-      // Send the "Comprar" and "Support" buttons
-      await interaction.reply({
-        content: "Elige una opción.",
-        components: [ticketButtons],
-      });
-    } else if (interaction.customId === "comprar") {
-      // Create a ticket and notify admins
-      // This will depend on how you're handling tickets and notifications
-      // For now, just send a message
-      await interaction.reply(
-        "Se ha notificado con los administradores que deseas comprar. Seras contactado a la brevedad posible."
-      );
-    } else if (interaction.customId === "support") {
-      // Create a ticket and notify admins
-      // This will depend on how you're handling tickets and notifications
-      // For now, just send a message
-      await interaction.reply("Support Ticket Created.");
+    if (!ticketeraChannel) {
+      console.log("ChangoTicket channel not found");
+      return;
     }
-  });
+    // // Delete the messages
+    // await ticketeraChannel.bulkDelete(messages);
+
+    // Create the initial button
+    const createTicketButton =
+      new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+        new ButtonBuilder()
+          .setCustomId("create_ticket")
+          .setLabel("Crear Ticket")
+          .setStyle(ButtonStyle.Primary)
+      );
+        //the fetch 
+
+      // for(const channel of guild?.channels.cache.values() ?? []){
+      //   if (channel.name=="ticketera") {
+      //     const ticketeraChannel = channel as TextChannel;
+      //           ticketeraChannel.send({
+      //   content: "Click the button below to create a ticket.",
+      //   components: [createTicketButton],
+      // });
+      // }}
+      // Send the initial button
+      ticketeraChannel.send({
+        content: "Dale click para que el chango te cree un ticket.",
+        components: [createTicketButton],
+      });
+
+    // Event listener for button clicks
+    this.client.on("interactionCreate", async (interaction) => {
+      if (!interaction.isButton()) return;
+
+      if (interaction.customId === "create_ticket") {
+        // Create the "Comprar" and "Support" buttons
+        const ticketButtons =
+          new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+            new ButtonBuilder()
+              .setCustomId("comprar")
+              .setLabel("Comprar")
+              .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+              .setCustomId("support")
+              .setLabel("Support")
+              .setStyle(ButtonStyle.Secondary)
+          );
+
+        // Send the "Comprar" and "Support" buttons
+        await interaction.reply({
+          content: "Elige una opción.",
+          ephemeral: true,
+          components: [ticketButtons],
+        });
+      } else if (interaction.customId === "comprar") {
+        // Create a ticket and notify admins
+        // This will depend on how you're handling tickets and notifications
+        // For now, just send a message
+            await interaction.reply({
+              content:
+                "Se ha notificado a los administradores que deseas comprar. Serás contactado a la brevedad posible.",
+              ephemeral: true,
+            });
+      } else if (interaction.customId === "support") {
+            await interaction.reply({
+              content:
+                "Se ha notificado a los administradores que deseas soporte. Serás contactado a la brevedad posible.",
+              ephemeral: true,
+            });
+      }
+    });
   }
 }
