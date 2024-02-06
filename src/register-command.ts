@@ -53,7 +53,12 @@ export class RegisterCommand {
       //     required:false
       //   }
       // ]
+    },
+    {
+      name:"userinfo",
+      description:"Tu información de usuario",
     }
+
   ];
 
   public registerCommands() {

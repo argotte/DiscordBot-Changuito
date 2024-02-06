@@ -58,30 +58,30 @@ export class BotDiscord {
   public start() {
     this.client.login(process.env.TOKEN);
   }
-  
+
   private setupEventHandlers() {
     this.client.on("ready", async () => {
       console.log(`Bot is ready as: ${this.client.user?.tag}`);
-          const guild = this.client.guilds.cache.first(); // Replace with the actual guild if needed
-          if (guild) {
-            await guild?.channels.fetch();
-              let ticketeraChannel = guild.channels.cache.find(
-                (channel) => channel.name === "changoticket"
-              ) as TextChannel;
-              if (!ticketeraChannel) {
-                await guild.channels.create({
-                  name: "changoticket",
-                  type: ChannelType.GuildText,
-                  permissionOverwrites: [
-                    {
-                      id: guild.roles.everyone.id,
-                      deny: [PermissionsBitField.Flags.SendMessages], // No one can send messages
-                    },
-                  ],
-                });
-              }
-              this.ticketeraSystem();
-          }
+      const guild = this.client.guilds.cache.first(); // Replace with the actual guild if needed
+      if (guild) {
+        await guild?.channels.fetch();
+        let ticketeraChannel = guild.channels.cache.find(
+          (channel) => channel.name === "changoticket"
+        ) as TextChannel;
+        if (!ticketeraChannel) {
+          await guild.channels.create({
+            name: "changoticket",
+            type: ChannelType.GuildText,
+            permissionOverwrites: [
+              {
+                id: guild.roles.everyone.id,
+                deny: [PermissionsBitField.Flags.SendMessages], // No one can send messages
+              },
+            ],
+          });
+        }
+        this.ticketeraSystem();
+      }
     });
 
     this.client.on("messageCreate", (message: Message) => {
@@ -151,6 +151,26 @@ export class BotDiscord {
 
           await interaction.reply({ embeds: [embed] });
           break;
+        case "userinfo":
+          // Get the member who used the command
+          const member = interaction.member as GuildMember;
+
+          // Get the date when the member joined the server
+          const joinedAt = member?.joinedAt;
+
+          // Get the age of the member's Discord account
+          const accountAge = Date.now() - member.user.createdAt.getTime();
+
+          // Get the member's roles
+          const roles = member.roles.cache.map((role) => role.name).join(", ");
+
+          // Reply to the command with the user's information
+          await interaction.reply(
+            `Changobot informa que te uniste a este server el: ${joinedAt?.toLocaleDateString()}. Tu cuenta de Discord tiene: ${Math.floor(
+              accountAge / (1000 * 60 * 60 * 24)
+            )} días de existencia. Tus roles en este servidor: ${roles}`
+          );
+          break;
         case "menu":
           const target = interaction.user;
           const compras = new ButtonBuilder()
@@ -174,15 +194,13 @@ export class BotDiscord {
             components: [buttonRow],
           });
           break;
-
-      
       }
     });
   }
 
   private async ticketeraSystem() {
-   const guild = this.client.guilds.cache.first();
-      await guild?.channels.fetch();
+    const guild = this.client.guilds.cache.first();
+    await guild?.channels.fetch();
     const ticketeraChannel = guild?.channels.cache.find(
       (channel) => channel.name === "changoticket"
     ) as TextChannel;
@@ -202,27 +220,23 @@ export class BotDiscord {
           .setLabel("Crear Ticket")
           .setStyle(ButtonStyle.Primary)
       );
-        //the fetch 
-
-      // for(const channel of guild?.channels.cache.values() ?? []){
-      //   if (channel.name=="ticketera") {
-      //     const ticketeraChannel = channel as TextChannel;
-      //           ticketeraChannel.send({
-      //   content: "Click the button below to create a ticket.",
-      //   components: [createTicketButton],
-      // });
-      // }}
-      // Send the initial button
-      ticketeraChannel.send({
-        content: "Dale click para que el chango te cree un ticket.",
-        components: [createTicketButton],
-      });
+    // Send the initial button
+    ticketeraChannel.send({
+      content: "Dale click para que el chango te cree un ticket.",
+      components: [createTicketButton],
+    });
 
     // Event listener for button clicks
     this.client.on("interactionCreate", async (interaction) => {
       if (!interaction.isButton()) return;
 
       if (interaction.customId === "create_ticket") {
+        // Create a new button with the label "Creating ticket" and set it to disabled
+        await interaction.reply({
+          content: "Creando el changoticket...",
+          ephemeral: true,
+        });
+
         // Create the "Comprar" and "Support" buttons
         const ticketButtons =
           new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
@@ -246,17 +260,17 @@ export class BotDiscord {
         // Create a ticket and notify admins
         // This will depend on how you're handling tickets and notifications
         // For now, just send a message
-            await interaction.reply({
-              content:
-                "Se ha notificado a los administradores que deseas comprar. Serás contactado a la brevedad posible.",
-              ephemeral: true,
-            });
+        await interaction.reply({
+          content:
+            "Se ha notificado a los administradores que deseas comprar. Serás contactado a la brevedad posible.",
+          ephemeral: true,
+        });
       } else if (interaction.customId === "support") {
-            await interaction.reply({
-              content:
-                "Se ha notificado a los administradores que deseas soporte. Serás contactado a la brevedad posible.",
-              ephemeral: true,
-            });
+        await interaction.reply({
+          content:
+            "Se ha notificado a los administradores que deseas soporte. Serás contactado a la brevedad posible.",
+          ephemeral: true,
+        });
       }
     });
   }
