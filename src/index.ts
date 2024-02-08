@@ -97,6 +97,56 @@ export class BotDiscord {
       if (!interaction.isChatInputCommand()) return;
       const { commandName } = interaction;
       switch (commandName) {
+        case "kick":
+          const intekick = interaction.member?.permissions as PermissionsBitField;
+          if (intekick.has(PermissionsBitField.Flags.KickMembers)) {
+            console.log("paso x intekick")
+            if (!interaction.guild) {
+              await interaction.reply(
+                "This command can only be used in a server."
+              );
+              return;
+            }
+            const user = interaction.options.getUser("usuario") as ClientUser;
+            const reason = interaction.options.getString("razon") as string;
+            const memberkick = interaction.guild.members.cache.get(user?.id);
+            if (!memberkick) {
+              await interaction.reply("El usuario no está en el server");
+              return;
+            }
+            await memberkick.kick(reason);
+            await interaction.reply("El chango ha expulsado al usuario, por la siguiente razón: "+reason);
+          }
+          else{
+            await interaction.reply("No tienes permisos para usar este comando, rufián.")
+          }
+        case "ban":
+          const inteban=interaction.member?.permissions as PermissionsBitField;
+          if(!inteban.has([PermissionsBitField.Flags.KickMembers, PermissionsBitField.Flags.BanMembers])){
+                      if (!interaction.guild) {
+                        await interaction.reply(
+                          "This command can only be used in a server."
+                        );
+                        return;
+                      }
+                      const user = interaction.options.getUser(
+                        "usuario"
+                      ) as ClientUser;
+                      const reason = interaction.options.getString(
+                        "razon"
+                      ) as string;
+                      const memberban = interaction.guild.members.cache.get(
+                        user?.id
+                      );
+                      if (!memberban) {
+                        await interaction.reply(
+                          "El usuario no está en el server"
+                        );
+                        return;
+                      }
+                      await memberban.ban({ reason: reason });
+          }
+          break;
         case "ping":
           await interaction.reply("changopong");
           break;

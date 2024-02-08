@@ -1,4 +1,4 @@
-import { REST,Routes,ApplicationCommandOptionType } from "discord.js";
+import { REST, Routes, ApplicationCommandOptionType } from "discord.js";
 import { config } from "dotenv";
 config();
 export class RegisterCommand {
@@ -37,8 +37,8 @@ export class RegisterCommand {
       ],
     },
     {
-      name:"menu",
-      description:"Menu del soporte del chango",
+      name: "menu",
+      description: "Menu del soporte del chango",
       // options:[
       //   {
       //     name:"target",
@@ -55,10 +55,125 @@ export class RegisterCommand {
       // ]
     },
     {
-      name:"userinfo",
-      description:"Tu información de usuario",
-    }
-
+      name: "userinfo",
+      description: "Tu información de usuario",
+    },
+    {
+      name:"kick",
+      description:"Expulsa a un usuario",
+      options:[
+        {
+          name:"usuario",
+          description:"Usuario a expulsar",
+          type:ApplicationCommandOptionType.User,
+          required:true
+        },
+        {
+          name:"razon",
+          description:"Razón de la expulsión",
+          type:ApplicationCommandOptionType.String,
+          required:false
+        }
+      ]
+    },
+    {
+      name: "ban",
+      description: "Banear a un usuario",
+      options: [
+        {
+          name: "usuario",
+          description: "Usuario a banear",
+          type: ApplicationCommandOptionType.User,
+          required: true,
+        },
+        {
+          name: "razon",
+          description: "Razón del ban",
+          type: ApplicationCommandOptionType.String,
+          required: false,
+        },
+      ],
+    },
+    {
+      name: "mute",
+      description: "Mutea a un usuario",
+    },
+    {
+      name: "unmute",
+      description: "Desmutea a un usuario",
+    },
+    {
+      name: "music",
+      description: "Comandos de música",
+    },
+    {
+      name: "usd",
+      description: "Convierte de dolares a pesos mexicanos",
+      options: [
+        {
+          name: "cantidad",
+          description: "Cantidad de dolares",
+          type: ApplicationCommandOptionType.Number,
+          required: true,
+        },
+      ],
+    },
+    {
+      name: "mxn",
+      description: "Convierte de pesos mexicanos a dolares",
+      options: [
+        {
+          name: "cantidad",
+          description: "Cantidad de pesos mexicanos",
+          type: ApplicationCommandOptionType.Number,
+          required: true,
+        },
+      ],
+    },
+    {
+      name: "rules",
+      description: "Reglas del servidor",
+    },
+    {
+      name: "delete",
+      description: "Borra mensajes",
+    },
+    {
+      name: "profilepic",
+      description: "Muestra la foto de perfil de un usuario",
+      options: [
+        {
+          name: "target",
+          description: "Usuario del que quieres ver la foto de perfil",
+          type: ApplicationCommandOptionType.User,
+          required: false,
+        },
+      ],
+    },
+    {
+      name: "emojiinfo",
+      description: "Información de un emoji",
+      options: [
+        {
+          name: "emoji",
+          description: "Emoji del que quieres ver la información",
+          type: ApplicationCommandOptionType.String,
+          required: true,
+        },
+      ],
+    },
+    {
+      name: "channelinfo",
+      description: "Información de un canal",
+      options: [
+        {
+          name: "channel",
+          description: "Canal del que quieres ver la información",
+          type: ApplicationCommandOptionType.Channel,
+          required: true,
+        },
+      ],
+    },
   ];
 
   public registerCommands() {
