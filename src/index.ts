@@ -118,11 +118,16 @@ export class BotDiscord {
             await interaction.reply("El chango ha expulsado al usuario, por la siguiente razón: "+reason);
           }
           else{
-            await interaction.reply("No tienes permisos para usar este comando, rufián.")
+            await interaction.reply(
+              "Escuchame, " +
+                interaction.user.username +
+                ", no tienes permisos para usar este comando, rufián."
+            );          
           }
+          break;
         case "ban":
           const inteban=interaction.member?.permissions as PermissionsBitField;
-          if(!inteban.has([PermissionsBitField.Flags.KickMembers, PermissionsBitField.Flags.BanMembers])){
+          if(inteban.has([PermissionsBitField.Flags.KickMembers, PermissionsBitField.Flags.BanMembers])){
                       if (!interaction.guild) {
                         await interaction.reply(
                           "This command can only be used in a server."
@@ -145,6 +150,13 @@ export class BotDiscord {
                         return;
                       }
                       await memberban.ban({ reason: reason });
+          }
+          else{
+            await interaction.reply(
+              "Escuchame, " +
+                interaction.user.username +
+                ", no tienes permisos para usar este comando, rufián."
+            );
           }
           break;
         case "ping":
