@@ -150,6 +150,10 @@ export class BotDiscord {
                         return;
                       }
                       await memberban.ban({ reason: reason });
+                      await interaction.reply(
+                        "El chango ha baneado al usuario, por la siguiente razón: " +
+                          reason
+                      );
           }
           else{
             await interaction.reply(
