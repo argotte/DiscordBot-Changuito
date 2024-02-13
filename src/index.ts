@@ -93,10 +93,13 @@ export class BotDiscord {
         message.reply("hola changuito");
       }
       if (message.content === this.prefix + " puto") {
-              message.reply("te reviento a madrazos y te caigo a pelada hdp");
+              message.reply("quieres pedos o que hdtpm?");
       }
       if (message.content === this.prefix + " perdon") {
               message.reply("el changuito te perdona uwu");
+      }
+      if (message.content === this.prefix + " ataca") {
+        message.reply("a quién hay que partirle su madre ???");
       }
     });
 
