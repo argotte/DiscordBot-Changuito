@@ -13,6 +13,8 @@ import {
   Guild,
   GuildMember,
   ClientUser,
+  Collection,
+  GuildEmoji,
 } from "discord.js";
 import { config } from "dotenv";
 config();
@@ -80,7 +82,7 @@ export class BotDiscord {
             ],
           });
         }
-        this.ticketeraSystem();
+        // this.ticketeraSystem();
       }
     });
 
@@ -90,6 +92,12 @@ export class BotDiscord {
       if (message.content === this.prefix + " hola") {
         message.reply("hola changuito");
       }
+      if (message.content === this.prefix + " puto") {
+              message.reply("te reviento a madrazos y te caigo a pelada hdp");
+      }
+      if (message.content === this.prefix + " perdon") {
+              message.reply("el changuito te perdona uwu");
+      }
     });
 
     this.client.on("interactionCreate", async (interaction) => {
@@ -97,10 +105,111 @@ export class BotDiscord {
       if (!interaction.isChatInputCommand()) return;
       const { commandName } = interaction;
       switch (commandName) {
+        case "delete":
+          const intedelete = interaction.member
+            ?.permissions as PermissionsBitField;
+          if (intedelete.has(PermissionsBitField.Flags.ManageMessages)) {
+            if (!interaction.guild) {
+              await interaction.reply(
+                "This command can only be used in a server."
+              );
+              return;
+            }
+            await interaction.deferReply({ ephemeral: true });
+            const messages =
+              (await interaction.channel?.messages.fetch()) as Collection<
+                string,
+                Message
+              >;
+            const channelDel = interaction.channel as TextChannel;
+            await channelDel.bulkDelete(messages);
+            await interaction.deleteReply();
+          } else {
+            await interaction.reply(
+              "Escuchame, " +
+                interaction.user.username +
+                ", no tienes permisos para usar este comando, rufián."
+            );
+          }
+          break;
+        case "profilepic":
+          const user = interaction.options.getUser("target") as ClientUser;
+          if (!user) {
+            await interaction.reply("No se ha encontrado el usuario.");
+            return;
+          }
+          await interaction.reply(user?.displayAvatarURL());
+          break;
+
+        case "emojiinfo":
+          const emojiString = interaction.options.getString("emoji");
+          if (!emojiString) {
+            await interaction.reply("Falta el emoji.");
+            return;
+          }
+
+          console.log(emojiString);
+          // Extract the emoji ID from the string
+          const emojiIdMatch = emojiString.match(/(?<=:)\d+(?=>)/g);
+          console.log(emojiIdMatch);
+          if (!emojiIdMatch) {
+            await interaction.reply("No se pudo extraer el ID del emoji.");
+            return;
+          }
+
+          const emojiId = emojiIdMatch[0];
+
+          // Get the emoji from the client's emoji cache
+          const emoji = this.client.emojis.cache.get(emojiId) as GuildEmoji;
+
+          if (!emoji) {
+            await interaction.reply("No se pudo encontrar el emoji.");
+            return;
+          }
+
+          await interaction.reply(
+            `El emoji ${emoji.name} tiene el ID: ${emoji.id}`
+          );
+          break;
+        case "channelinfo":
+          const channel = interaction.options.getChannel(
+            "channel"
+          ) as TextChannel;
+          if (!channel) {
+            await interaction.reply("Falta el canal.");
+            return;
+          }
+          const embedchannelinfo = new EmbedBuilder()
+            .setTitle(`INFORMACIÓN DEL CANAL`)
+            .setDescription(`Detalles sobre ${channel.name}`)
+            .setColor("Random")
+            .addFields(
+              { name: "Nombre: ", value: channel.name, inline: true },
+              {
+                name: "ID: ",
+                value: channel.id,
+                inline: true,
+              },
+              {
+                name: "Channel Type",
+                value: ChannelType.GuildText.toString(),
+                inline: true,
+              },
+              {
+                name: "Fecha de creación: ",
+                value: channel.createdAt.toDateString(),
+                inline: true,
+              }
+            )
+            .setTimestamp();
+
+          await interaction.reply({ embeds: [embedchannelinfo] });
+          break;
         case "kick":
-          const intekick = interaction.member?.permissions as PermissionsBitField;
+          const intekick = interaction.member
+            ?.permissions as PermissionsBitField;
           if (intekick.has(PermissionsBitField.Flags.KickMembers)) {
-            console.log("paso x intekick")
+            console.log("paso x intekick");
             if (!interaction.guild) {
               await interaction.reply(
                 "This command can only be used in a server."
@@ -109,53 +218,53 @@ export class BotDiscord {
             }
             const user = interaction.options.getUser("usuario") as ClientUser;
             const reason = interaction.options.getString("razon") as string;
+            console.log(reason);
             const memberkick = interaction.guild.members.cache.get(user?.id);
             if (!memberkick) {
               await interaction.reply("El usuario no está en el server");
               return;
             }
+            await interaction.reply(
+              "El chango ha expulsado al usuario, por la siguiente razón: " +
+                reason
+            );
             await memberkick.kick(reason);
-            await interaction.reply("El chango ha expulsado al usuario, por la siguiente razón: "+reason);
-          }
-          else{
+          } else {
             await interaction.reply(
               "Escuchame, " +
                 interaction.user.username +
                 ", no tienes permisos para usar este comando, rufián."
-            );          
+            );
           }
           break;
         case "ban":
-          const inteban=interaction.member?.permissions as PermissionsBitField;
-          if(inteban.has([PermissionsBitField.Flags.KickMembers, PermissionsBitField.Flags.BanMembers])){
-                      if (!interaction.guild) {
-                        await interaction.reply(
-                          "This command can only be used in a server."
-                        );
-                        return;
-                      }
-                      const user = interaction.options.getUser(
-                        "usuario"
-                      ) as ClientUser;
-                      const reason = interaction.options.getString(
-                        "razon"
-                      ) as string;
-                      const memberban = interaction.guild.members.cache.get(
-                        user?.id
-                      );
-                      if (!memberban) {
-                        await interaction.reply(
-                          "El usuario no está en el server"
-                        );
-                        return;
-                      }
-                      await memberban.ban({ reason: reason });
-                      await interaction.reply(
-                        "El chango ha baneado al usuario, por la siguiente razón: " +
-                          reason
-                      );
-          }
-          else{
+          const inteban = interaction.member
+            ?.permissions as PermissionsBitField;
+          if (
+            inteban.has([
+              PermissionsBitField.Flags.KickMembers,
+              PermissionsBitField.Flags.BanMembers,
+            ])
+          ) {
+            if (!interaction.guild) {
+              await interaction.reply(
+                "This command can only be used in a server."
+              );
+              return;
+            }
+            const user = interaction.options.getUser("usuario") as ClientUser;
+            const reason = interaction.options.getString("razon") as string;
+            const memberban = interaction.guild.members.cache.get(user?.id);
+            if (!memberban) {
+              await interaction.reply("El usuario no está en el server");
+              return;
+            }
+            await memberban.ban({ reason: reason });
+            await interaction.reply(
+              "El chango ha baneado al usuario, por la siguiente razón: " +
+                reason
+            );
+          } else {
             await interaction.reply(
               "Escuchame, " +
                 interaction.user.username +

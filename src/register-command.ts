@@ -59,22 +59,22 @@ export class RegisterCommand {
       description: "Tu información de usuario",
     },
     {
-      name:"kick",
-      description:"Expulsa a un usuario",
-      options:[
+      name: "kick",
+      description: "Expulsa a un usuario",
+      options: [
         {
-          name:"usuario",
-          description:"Usuario a expulsar",
-          type:ApplicationCommandOptionType.User,
-          required:true
+          name: "usuario",
+          description: "Usuario a expulsar",
+          type: ApplicationCommandOptionType.User,
+          required: true,
         },
         {
-          name:"razon",
-          description:"Razón de la expulsión",
-          type:ApplicationCommandOptionType.String,
-          required:false
-        }
-      ]
+          name: "razon",
+          description: "Razón de la expulsión",
+          type: ApplicationCommandOptionType.String,
+          required: false,
+        },
+      ],
     },
     {
       name: "ban",
@@ -146,7 +146,7 @@ export class RegisterCommand {
           name: "target",
           description: "Usuario del que quieres ver la foto de perfil",
           type: ApplicationCommandOptionType.User,
-          required: false,
+          required: true,
         },
       ],
     },
@@ -156,7 +156,7 @@ export class RegisterCommand {
       options: [
         {
           name: "emoji",
-          description: "Emoji del que quieres ver la información",
+          description: "Devuelve la manera de usar un emoji con el formato <nombre:ID>",
           type: ApplicationCommandOptionType.String,
           required: true,
         },
