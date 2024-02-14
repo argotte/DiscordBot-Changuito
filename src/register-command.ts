@@ -18,6 +18,7 @@ export class RegisterCommand {
       name: "hola",
       description: "El chango te saluda",
     },
+
     {
       name: "sumar",
       description: "Asi es, chango sabe sumar",
@@ -103,8 +104,28 @@ export class RegisterCommand {
       description: "Desmutea a un usuario",
     },
     {
-      name: "music",
-      description: "Comandos de música",
+      name: "play",
+      description: "Reproduce de youtube",
+      options: [
+        {
+          name: "url",
+          description: "Nombre de la canción",
+          type: ApplicationCommandOptionType.String,
+          required: true,
+        },
+      ],
+    },
+    {
+      name:"queue",
+      description:"Añade a la cola de reproducción",
+      options:[
+        {
+          name:"url",
+          description:"url",
+          type:ApplicationCommandOptionType.String,
+          required:true
+        }
+      ]
     },
     {
       name: "usd",

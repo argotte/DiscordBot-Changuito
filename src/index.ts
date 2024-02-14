@@ -15,7 +15,21 @@ import {
   ClientUser,
   Collection,
   GuildEmoji,
+  VoiceChannel,
 } from "discord.js";
+import { validate, video_basic_info, search, video_info, stream } from "play-dl";
+import {
+  stream as playdlStream,
+  video_basic_info as playdlInfo,
+  validate as playdlValidate,
+} from "play-dl";
+import {
+  joinVoiceChannel,
+  createAudioPlayer,
+  createAudioResource,
+  AudioPlayerStatus,
+} from "@discordjs/voice";
+
 import { config } from "dotenv";
 config();
 import * as configjson from "./config.json";
@@ -23,6 +37,7 @@ import { RegisterCommand } from "./register-command";
 export class BotDiscord {
   private client: Client;
   // private member: GuildMember
+  private queue = new Map<string, string[]>();
   private prefix: string = configjson.prefix;
   private registerCommand: RegisterCommand = new RegisterCommand();
   constructor(
@@ -93,10 +108,10 @@ export class BotDiscord {
         message.reply("hola changuito");
       }
       if (message.content === this.prefix + " puto") {
-              message.reply("quieres pedos o que hdtpm?");
+        message.reply("quieres pedos o que hdtpm?");
       }
       if (message.content === this.prefix + " perdon") {
-              message.reply("el changuito te perdona uwu");
+        message.reply("el changuito te perdona uwu");
       }
       if (message.content === this.prefix + " ataca") {
         message.reply("a quién hay que partirle su madre ???");
@@ -108,6 +123,119 @@ export class BotDiscord {
       if (!interaction.isChatInputCommand()) return;
       const { commandName } = interaction;
       switch (commandName) {
+        case "queue":
+          const queryToQueue = interaction.options.getString("url");
+          if (!queryToQueue) {
+            await interaction.reply("Falta la consulta de búsqueda.");
+            return;
+          }
+          const guildIdForQueue = interaction.guild?.id as string;
+          if (!guildIdForQueue) {
+            await interaction.reply(
+              "Este comando solo se puede usar en un servidor."
+            );
+            return;
+          }
+          let serverQueueList = this.queue.get(guildIdForQueue) as string[];
+          if (!serverQueueList) {
+            serverQueueList = [];
+            this.queue.set(guildIdForQueue, serverQueueList);
+          }
+
+          // Search for the query and get the URL of the first result
+          const searchResultsForQueue = await search(queryToQueue);
+          const firstResultForQueue = searchResultsForQueue.values().next().value;
+          if (!firstResultForQueue) {
+            await interaction.reply("No se encontraron resultados.");
+            return;
+          }
+          const urlToQueue = firstResultForQueue.url;
+
+          serverQueueList.push(urlToQueue);
+          await interaction.reply(`Añadido a la cola: ${urlToQueue}`);
+          break;
+
+        case "play":
+          const query = interaction.options.getString("url");
+          if (!query) {
+            await interaction.reply("Falta la URL del video de YouTube.");
+            return;
+          }
+
+          const channelVoice = interaction.member as GuildMember;
+          const channelVoice2 = channelVoice.voice.channel;
+          if (!channelVoice2) {
+            await interaction.reply(
+              "Debes estar en un canal de voz para reproducir música."
+            );
+            return;
+          }
+          const guildId = interaction.guild?.id as string;
+          if (!guildId) {
+            await interaction.reply(
+              "Este comando solo se puede usar en un servidor."
+            );
+            return;
+          }
+
+          let serverQueue = this.queue.get(guildId) as string[];
+          if (!serverQueue) {
+            serverQueue = [];
+            this.queue.set(guildId, serverQueue);
+          }
+
+          let url: string;
+          const searchResults = await search(query);
+          const firstResult = searchResults.values().next().value;
+          if (!firstResult) {
+            await interaction.reply("No se encontraron resultados.");
+            return;
+          }
+          url = firstResult.url;
+          serverQueue.push(url);
+
+          if (serverQueue.length === 1) {
+            try {
+              const connection = joinVoiceChannel({
+                channelId: channelVoice2.id,
+                guildId: channelVoice2.guild.id,
+                adapterCreator: channelVoice2.guild.voiceAdapterCreator,
+              });
+              const playSong = async () => {
+                const songUrl = serverQueue[0];
+                if (!songUrl) {
+                  connection.destroy();
+                  return;
+                }
+
+                const streamData = await stream(songUrl);
+                const resource = createAudioResource(streamData.stream, {
+                  inputType: streamData.type,
+                });
+                const player = createAudioPlayer();
+                await interaction.followUp(`Reproduciendo: ${songUrl}`);
+                player.play(resource);
+                connection.subscribe(player);
+
+                player.on(AudioPlayerStatus.Idle, () => {
+                  serverQueue.shift();
+                  playSong();
+                });
+              };
+              playSong();
+
+              await interaction.reply(`Reproduciendo: ${url}`);
+            } catch (error) {
+              console.error(error);
+              console.log(error);
+              await interaction.followUp(
+                "Hubo un error al reproducir el video."
+              );
+            }
+          } else {
+            await interaction.reply(`Añadido a la cola: ${url}`);
+          }
+          break;
         case "delete":
           const intedelete = interaction.member
             ?.permissions as PermissionsBitField;
