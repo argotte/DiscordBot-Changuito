@@ -16,6 +16,7 @@ import {
   Collection,
   GuildEmoji,
   VoiceChannel,
+  DiscordAPIError,
 } from "discord.js";
 import { validate, video_basic_info, search, video_info, stream } from "play-dl";
 import {
@@ -213,7 +214,26 @@ export class BotDiscord {
                   inputType: streamData.type,
                 });
                 const player = createAudioPlayer();
-                await interaction.followUp(`Reproduciendo: ${songUrl}`);
+                        try {
+                          await interaction.followUp(
+                            `Reproduciendo: ${songUrl}`
+                          );
+                        } catch (error) {
+                          if (
+                            error instanceof DiscordAPIError &&
+                            error.code === 10062
+                          ) {
+                            // La interacción ha expirado, envía el mensaje directamente al canal
+                            if (interaction.channel) {
+                              interaction.channel.send(
+                                `Reproduciendo: ${songUrl}`
+                              );
+                            }
+                          } else {
+                            // Se produjo un error diferente, lanza el error para manejarlo en otro lugar
+                            throw error;
+                          }
+                        }
                 player.play(resource);
                 connection.subscribe(player);
 
@@ -224,18 +244,28 @@ export class BotDiscord {
               };
               playSong();
 
-              await interaction.reply(`Reproduciendo: ${url}`);
-            } catch (error) {
-              console.error(error);
-              console.log(error);
-              await interaction.followUp(
-                "Hubo un error al reproducir el video."
-              );
-            }
-          } else {
-            await interaction.reply(`Añadido a la cola: ${url}`);
+      try {
+        await interaction.reply(`Reproduciendo: ${url}`);
+      } catch (error) {
+        if (error instanceof DiscordAPIError && error.code === 10062) {
+          // La interacción ha expirada, envía el mensaje directamente al canal
+          if (interaction.channel) {
+            interaction.channel.send(`Reproduciendo: ${url}`);
           }
-          break;
+        } else {
+          // Se produjo un error diferente, lanza el error para manejarlo en otro lugar
+          throw error;
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      console.log(error);
+      await interaction.followUp("Hubo un error al reproducir el video.");
+    }
+  } else {
+    await interaction.reply(`Añadido a la cola: ${url}`);
+  }
+  break;
         case "delete":
           const intedelete = interaction.member
             ?.permissions as PermissionsBitField;
