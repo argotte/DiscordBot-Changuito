@@ -132,6 +132,10 @@ export class RegisterCommand {
       description:"Siguiente canción",
     },
     {
+      name:"stop",
+      description:"Detiene la reproducción",
+    },
+    {
       name: "usd",
       description: "Convierte de dolares a pesos mexicanos",
       options: [

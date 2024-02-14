@@ -119,6 +119,37 @@ export class BotDiscord {
       if (!interaction.isChatInputCommand()) return;
       const { commandName } = interaction;
       switch (commandName) {
+        case "stop":
+          const guildIdForStop = interaction.guild?.id as string;
+          if (!guildIdForStop) {
+            await interaction.reply(
+              "Este comando solo se puede usar en un servidor."
+            );
+            return;
+          }
+          const serverQueueForStop = this.queue.get(guildIdForStop) as string[];
+          if (!serverQueueForStop || serverQueueForStop.length === 0) {
+            await interaction.reply("No hay canciones en la cola.");
+            return;
+          }
+          serverQueueForStop.length = 0;
+//Ahora si esta conectado a un canal de voz, lo desconecta
+          const channelVoiceStop = interaction.member as GuildMember;
+          const channelVoice2Stop = channelVoiceStop.voice.channel;
+          if (!channelVoice2Stop) {
+            await interaction.reply(
+              "No estoy conectado a un canal de voz."
+            );
+            return;
+          }
+          const connectionStop = joinVoiceChannel({
+            channelId: channelVoice2Stop.id,
+            guildId: channelVoice2Stop.guild.id,
+            adapterCreator: channelVoice2Stop.guild.voiceAdapterCreator,
+          });
+          connectionStop.destroy();
+          await interaction.reply("Detenido.");
+          break;
         case "next":
           const guildIdForNext = interaction.guild?.id as string;
           if (!guildIdForNext) {
