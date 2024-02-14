@@ -18,12 +18,7 @@ import {
   VoiceChannel,
   DiscordAPIError,
 } from "discord.js";
-import { validate, video_basic_info, search, video_info, stream } from "play-dl";
-import {
-  stream as playdlStream,
-  video_basic_info as playdlInfo,
-  validate as playdlValidate,
-} from "play-dl";
+import { search, stream } from "play-dl";
 import {
   joinVoiceChannel,
   createAudioPlayer,
@@ -124,6 +119,81 @@ export class BotDiscord {
       if (!interaction.isChatInputCommand()) return;
       const { commandName } = interaction;
       switch (commandName) {
+        case "next":
+          const guildIdForNext = interaction.guild?.id as string;
+          if (!guildIdForNext) {
+            await interaction.reply(
+              "Este comando solo se puede usar en un servidor."
+            );
+            return;
+          }
+          const serverQueueForNext = this.queue.get(guildIdForNext) as string[];
+          if (!serverQueueForNext || serverQueueForNext.length === 0) {
+            await interaction.reply("No hay canciones en la cola.");
+            return;
+          }
+          serverQueueForNext.shift();
+          let nextSongUrl = serverQueueForNext[0];
+          if (nextSongUrl) {
+            const channelVoice = interaction.member as GuildMember;
+            const channelVoice2 = channelVoice.voice.channel;
+            if (!channelVoice2) {
+              await interaction.reply(
+                "Debes estar en un canal de voz para reproducir música."
+              );
+              return;
+            }
+            const connection = joinVoiceChannel({
+              channelId: channelVoice2.id,
+              guildId: channelVoice2.guild.id,
+              adapterCreator: channelVoice2.guild.voiceAdapterCreator,
+            });
+            const playSong = async () => {
+              const songUrl = serverQueueForNext[0];
+              if (!songUrl) {
+                connection.destroy();
+                return;
+              }
+              const streamData = await stream(songUrl);
+              const resource = createAudioResource(streamData.stream, {
+                inputType: streamData.type,
+              });
+              const player = createAudioPlayer();
+              try {
+                await interaction.editReply(`Reproduciendo: ${songUrl}`);
+              } 
+              catch (error){
+                if (error instanceof DiscordAPIError &&error.code === 10062) {
+                  // La interacción ha expirado, envía el mensaje directamente al canal
+                  if (interaction.channel) {
+                    interaction.channel.send(`Reproduciendo: ${songUrl}`);
+                  }
+                } else {
+                    // Se produjo un error diferente, lanza el error para manejarlo en otro lugar
+                    throw error;
+                  }
+              }
+              player.play(resource);
+              connection.subscribe(player);
+              player.on(AudioPlayerStatus.Idle, async () => {
+                serverQueueForNext.shift();
+                nextSongUrl=serverQueueForNext[0];
+                if (nextSongUrl) {
+                  await interaction.deferReply();
+                  await playSong();
+                }
+                else {
+                  await interaction.editReply("No hay canciones en la cola.");
+                }
+              });
+            };
+            await interaction.deferReply();
+            await playSong();
+          }
+          else {
+            await interaction.reply("No hay canciones en la cola.");
+          }
+          break;
         case "queue":
           const queryToQueue = interaction.options.getString("url");
           if (!queryToQueue) {
@@ -145,7 +215,9 @@ export class BotDiscord {
 
           // Search for the query and get the URL of the first result
           const searchResultsForQueue = await search(queryToQueue);
-          const firstResultForQueue = searchResultsForQueue.values().next().value;
+          const firstResultForQueue = searchResultsForQueue
+            .values()
+            .next().value;
           if (!firstResultForQueue) {
             await interaction.reply("No se encontraron resultados.");
             return;
@@ -214,58 +286,56 @@ export class BotDiscord {
                   inputType: streamData.type,
                 });
                 const player = createAudioPlayer();
-                        try {
-                          await interaction.followUp(
-                            `Reproduciendo: ${songUrl}`
-                          );
-                        } catch (error) {
-                          if (
-                            error instanceof DiscordAPIError &&
-                            error.code === 10062
-                          ) {
-                            // La interacción ha expirado, envía el mensaje directamente al canal
-                            if (interaction.channel) {
-                              interaction.channel.send(
-                                `Reproduciendo: ${songUrl}`
-                              );
-                            }
-                          } else {
-                            // Se produjo un error diferente, lanza el error para manejarlo en otro lugar
-                            throw error;
-                          }
-                        }
+                try {
+                  await interaction.followUp(`Reproduciendo: ${songUrl}`);
+                } catch (error) {
+                  if (
+                    error instanceof DiscordAPIError &&
+                    error.code === 10062
+                  ) {
+                    // La interacción ha expirado, envía el mensaje directamente al canal
+                    if (interaction.channel) {
+                      await interaction.channel.send(`Reproduciendo: ${songUrl}`);
+                    }
+                  } else {
+                    // Se produjo un error diferente, lanza el error para manejarlo en otro lugar
+                    throw error;
+                  }
+                }
                 player.play(resource);
                 connection.subscribe(player);
 
-                player.on(AudioPlayerStatus.Idle, () => {
+                player.on(AudioPlayerStatus.Idle, async () => {
                   serverQueue.shift();
-                  playSong();
+                  await playSong();
                 });
               };
-              playSong();
-
-      try {
-        await interaction.reply(`Reproduciendo: ${url}`);
-      } catch (error) {
-        if (error instanceof DiscordAPIError && error.code === 10062) {
-          // La interacción ha expirada, envía el mensaje directamente al canal
-          if (interaction.channel) {
-            interaction.channel.send(`Reproduciendo: ${url}`);
+              await interaction.deferReply();
+              await playSong();
+              try {
+                await interaction.editReply(`Reproduciendo: ${url}`);
+              } catch (error) {
+                if (error instanceof DiscordAPIError && error.code === 10062) {
+                  // La interacción ha expirada, envía el mensaje directamente al canal
+                  if (interaction.channel) {
+                    await interaction.channel.send(`Reproduciendo: ${url}`);
+                  }
+                } else {
+                  // Se produjo un error diferente, lanza el error para manejarlo en otro lugar
+                  throw error;
+                }
+              }
+            } catch (error) {
+              console.error(error);
+              console.log(error);
+              await interaction.followUp(
+                "Hubo un error al reproducir el video."
+              );
+            }
+          } else {
+            await interaction.reply(`Añadido a la cola: ${url}`);
           }
-        } else {
-          // Se produjo un error diferente, lanza el error para manejarlo en otro lugar
-          throw error;
-        }
-      }
-    } catch (error) {
-      console.error(error);
-      console.log(error);
-      await interaction.followUp("Hubo un error al reproducir el video.");
-    }
-  } else {
-    await interaction.reply(`Añadido a la cola: ${url}`);
-  }
-  break;
+          break;
         case "delete":
           const intedelete = interaction.member
             ?.permissions as PermissionsBitField;

@@ -128,6 +128,10 @@ export class RegisterCommand {
       ]
     },
     {
+      name:"next",
+      description:"Siguiente canción",
+    },
+    {
       name: "usd",
       description: "Convierte de dolares a pesos mexicanos",
       options: [
