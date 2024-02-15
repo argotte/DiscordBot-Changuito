@@ -306,56 +306,32 @@ export class BotDiscord {
                 adapterCreator: channelVoice2.guild.voiceAdapterCreator,
               });
               const playSong = async () => {
-                const songUrl = serverQueue[0];
-                if (!songUrl) {
+                url = serverQueue[0];
+                if (!url) {
                   connection.destroy();
                   return;
                 }
 
-                const streamData = await stream(songUrl);
+                const streamData = await stream(url);
                 const resource = createAudioResource(streamData.stream, {
                   inputType: streamData.type,
                 });
                 const player = createAudioPlayer();
-                try {
-                  await interaction.followUp(`Reproduciendo: ${songUrl}`);
-                } catch (error) {
-                  if (
-                    error instanceof DiscordAPIError &&
-                    error.code === 10062
-                  ) {
-                    // La interacción ha expirado, envía el mensaje directamente al canal
-                    if (interaction.channel) {
-                      await interaction.channel.send(`Reproduciendo: ${songUrl}`);
-                    }
-                  } else {
-                    // Se produjo un error diferente, lanza el error para manejarlo en otro lugar
-                    throw error;
-                  }
-                }
                 player.play(resource);
                 connection.subscribe(player);
 
                 player.on(AudioPlayerStatus.Idle, async () => {
                   serverQueue.shift();
+                  url = serverQueue[0];
+                  await interaction.channel?.send(
+                    `Reproduciendo ahora: ${url}`
+                  );
                   await playSong();
                 });
               };
               await interaction.deferReply();
               await playSong();
-              try {
-                await interaction.editReply(`Reproduciendo: ${url}`);
-              } catch (error) {
-                if (error instanceof DiscordAPIError && error.code === 10062) {
-                  // La interacción ha expirada, envía el mensaje directamente al canal
-                  if (interaction.channel) {
-                    await interaction.channel.send(`Reproduciendo: ${url}`);
-                  }
-                } else {
-                  // Se produjo un error diferente, lanza el error para manejarlo en otro lugar
-                  throw error;
-                }
-              }
+              await interaction.editReply(`Reproduciendo: ${url}`);
             } catch (error) {
               console.error(error);
               console.log(error);
