@@ -24,6 +24,7 @@ import {
   createAudioPlayer,
   createAudioResource,
   AudioPlayerStatus,
+  AudioPlayer,
 } from "@discordjs/voice";
 
 import { config } from "dotenv";
@@ -34,6 +35,7 @@ export class BotDiscord {
   private client: Client;
   // private member: GuildMember
   private queue = new Map<string, string[]>();
+  private players = new Map<string, AudioPlayer>(); // Almacena los AudioPlayers por ID de servidor
   private prefix: string = configjson.prefix;
   private registerCommand: RegisterCommand = new RegisterCommand();
   constructor(
@@ -133,13 +135,11 @@ export class BotDiscord {
             return;
           }
           serverQueueForStop.length = 0;
-//Ahora si esta conectado a un canal de voz, lo desconecta
+          //Ahora si esta conectado a un canal de voz, lo desconecta
           const channelVoiceStop = interaction.member as GuildMember;
           const channelVoice2Stop = channelVoiceStop.voice.channel;
           if (!channelVoice2Stop) {
-            await interaction.reply(
-              "No estoy conectado a un canal de voz."
-            );
+            await interaction.reply("No estoy conectado a un canal de voz.");
             return;
           }
           const connectionStop = joinVoiceChannel({
@@ -149,6 +149,24 @@ export class BotDiscord {
           });
           connectionStop.destroy();
           await interaction.reply("Detenido.");
+          break;
+        case "resume":
+          const playerResume = this.players.get(interaction.guild?.id as string);
+          if (playerResume) {
+            playerResume.unpause();
+            await interaction.reply("Música reanudada.");
+          } else {
+            await interaction.reply("No hay música pausada en este momento.");
+          }
+          break;
+        case "pause":
+          const playerPause = this.players.get(interaction.guild?.id as string);
+          if (playerPause) {
+            playerPause.pause();
+            await interaction.reply("Música pausada.");
+          } else {
+            await interaction.reply("No hay música sonando en este momento.");
+          }
           break;
         case "next":
           const guildIdForNext = interaction.guild?.id as string;
@@ -190,38 +208,36 @@ export class BotDiscord {
                 inputType: streamData.type,
               });
               const player = createAudioPlayer();
+              this.players.set(guildIdForNext, player);
               try {
                 await interaction.editReply(`Reproduciendo: ${songUrl}`);
-              } 
-              catch (error){
-                if (error instanceof DiscordAPIError &&error.code === 10062) {
+              } catch (error) {
+                if (error instanceof DiscordAPIError && error.code === 10062) {
                   // La interacción ha expirado, envía el mensaje directamente al canal
                   if (interaction.channel) {
                     interaction.channel.send(`Reproduciendo: ${songUrl}`);
                   }
                 } else {
-                    // Se produjo un error diferente, lanza el error para manejarlo en otro lugar
-                    throw error;
-                  }
+                  // Se produjo un error diferente, lanza el error para manejarlo en otro lugar
+                  throw error;
+                }
               }
               player.play(resource);
               connection.subscribe(player);
               player.on(AudioPlayerStatus.Idle, async () => {
                 serverQueueForNext.shift();
-                nextSongUrl=serverQueueForNext[0];
+                nextSongUrl = serverQueueForNext[0];
                 if (nextSongUrl) {
                   await interaction.deferReply();
                   await playSong();
-                }
-                else {
+                } else {
                   await interaction.editReply("No hay canciones en la cola.");
                 }
               });
             };
             await interaction.deferReply();
             await playSong();
-          }
-          else {
+          } else {
             await interaction.reply("No hay canciones en la cola.");
           }
           break;
@@ -317,15 +333,18 @@ export class BotDiscord {
                   inputType: streamData.type,
                 });
                 const player = createAudioPlayer();
+                this.players.set(guildId, player);
                 player.play(resource);
                 connection.subscribe(player);
 
                 player.on(AudioPlayerStatus.Idle, async () => {
                   serverQueue.shift();
                   url = serverQueue[0];
+                  if (url) {
                   await interaction.channel?.send(
                     `Reproduciendo ahora: ${url}`
                   );
+                  }
                   await playSong();
                 });
               };
@@ -343,6 +362,7 @@ export class BotDiscord {
             await interaction.reply(`Añadido a la cola: ${url}`);
           }
           break;
+
         case "delete":
           const intedelete = interaction.member
             ?.permissions as PermissionsBitField;
