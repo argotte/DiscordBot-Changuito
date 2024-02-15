@@ -135,29 +135,37 @@ export class RegisterCommand {
       name:"stop",
       description:"Detiene la reproducción",
     },
+    // {
+    //   name: "usd",
+    //   description: "Convierte de dolares a pesos mexicanos",
+    //   options: [
+    //     {
+    //       name: "cantidad",
+    //       description: "Cantidad de dolares",
+    //       type: ApplicationCommandOptionType.Number,
+    //       required: true,
+    //     },
+    //   ],
+    // },
+    // {
+    //   name: "mxn",
+    //   description: "Convierte de pesos mexicanos a dolares",
+    //   options: [
+    //     {
+    //       name: "cantidad",
+    //       description: "Cantidad de pesos mexicanos",
+    //       type: ApplicationCommandOptionType.Number,
+    //       required: true,
+    //     },
+    //   ],
+    // },
     {
-      name: "usd",
-      description: "Convierte de dolares a pesos mexicanos",
-      options: [
-        {
-          name: "cantidad",
-          description: "Cantidad de dolares",
-          type: ApplicationCommandOptionType.Number,
-          required: true,
-        },
-      ],
+      name:"pause",
+      description:"Pausa la reproducción",
     },
     {
-      name: "mxn",
-      description: "Convierte de pesos mexicanos a dolares",
-      options: [
-        {
-          name: "cantidad",
-          description: "Cantidad de pesos mexicanos",
-          type: ApplicationCommandOptionType.Number,
-          required: true,
-        },
-      ],
+      name:"resume",
+      description:"Reanuda la reproducción",
     },
     {
       name: "rules",
