@@ -95,7 +95,7 @@ export class BotDiscord {
             ],
           });
         }
-        // this.ticketeraSystem();
+         this.ticketeraSystem();
       }
     });
 
@@ -643,8 +643,17 @@ export class BotDiscord {
       return;
     }
     // // Delete the messages
-    // await ticketeraChannel.bulkDelete(messages);
+    const existingMessages = await ticketeraChannel.messages.fetch();
 
+    // Intenta eliminar todos los mensajes del canal con bulkDelete
+    const messagesToDelete = existingMessages.filter((msg) => msg.deletable);
+
+    await ticketeraChannel.bulkDelete(messagesToDelete).catch(async () => {
+      // Si bulkDelete falla, elimina los mensajes uno por uno
+      for (const message of messagesToDelete.values()) {
+        await message.delete().catch(() => {}); // Ignora los errores
+      }
+    });
     // Create the initial button
     const createTicketButton =
       new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
@@ -657,16 +666,28 @@ export class BotDiscord {
     ticketeraChannel.send({
       content: "Dale click para que el chango te cree un ticket.",
       components: [createTicketButton],
+      
     });
 
     // Event listener for button clicks
     this.client.on("interactionCreate", async (interaction) => {
+      const lastMessage = ticketeraChannel.messages.cache
+        .filter((m) => m.author.bot)
+        .last();
+      if (!lastMessage) {
+        console.log("No se encontró el último mensaje del bot en el canal.");
+        return;
+      }
       if (!interaction.isButton()) return;
-
+      await interaction.deferReply({ ephemeral: true });
       if (interaction.customId === "create_ticket") {
         // Create a new button with the label "Creating ticket" and set it to disabled
-        await interaction.reply({
-          content: "Creando el changoticket...",
+        const embed = new EmbedBuilder()
+              .setTitle("Creando el changoticket...")
+              .setColor("#0099ff");
+        await interaction.followUp({
+          embeds: [embed],
+          components: [],
           ephemeral: true,
         });
 
@@ -684,26 +705,34 @@ export class BotDiscord {
           );
 
         // Send the "Comprar" and "Support" buttons
-        await interaction.reply({
-          content: "Elige una opción.",
-          ephemeral: true,
-          components: [ticketButtons],
+        const optionEmbed = new EmbedBuilder()
+              .setTitle("Elige una opción.")
+              .setColor("#0099ff");
+        await interaction.followUp({    
+          embeds:[optionEmbed],
+          components:[ticketButtons],
+          ephemeral:true,
         });
       } else if (interaction.customId === "comprar") {
-        // Create a ticket and notify admins
-        // This will depend on how you're handling tickets and notifications
-        // For now, just send a message
-        await interaction.reply({
-          content:
-            "Se ha notificado a los administradores que deseas comprar. Serás contactado a la brevedad posible.",
-          ephemeral: true,
-        });
+          const comprarEmbed = new EmbedBuilder()
+            .setTitle(
+              "Se ha notificado a los administradores que deseas comprar. Serás contactado a la brevedad posible."
+            )
+            .setColor("#0099ff");
+          await interaction.followUp({
+            embeds: [comprarEmbed],
+            ephemeral: true,
+          });
       } else if (interaction.customId === "support") {
-        await interaction.reply({
-          content:
-            "Se ha notificado a los administradores que deseas soporte. Serás contactado a la brevedad posible.",
-          ephemeral: true,
-        });
+            const supportEmbed = new EmbedBuilder()
+              .setTitle(
+                "Se ha notificado a los administradores que deseas soporte. Serás contactado a la brevedad posible."
+              )
+              .setColor("#0099ff");
+            await interaction.followUp({
+              embeds: [supportEmbed],
+              ephemeral: true,            
+            });
       }
     });
   }
